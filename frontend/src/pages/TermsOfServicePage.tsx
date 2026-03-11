@@ -243,7 +243,7 @@ export const TermsOfServicePage = () => {
               Elegantize Support Team
             </h3>
             <p className="mb-1">
-              <strong>Email:</strong> ziaofficia4@gmail.com
+              <strong>Email:</strong> info@elegantize.com
             </p>
             <p className="mb-1">
               <strong>Phone:</strong> +1 (347) 686-4562

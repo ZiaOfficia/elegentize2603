@@ -152,7 +152,7 @@ export const LeftFixedEnquiryPanel = () => {
           <div className="mt-auto pt-8 border-t border-gray-100">
             <div className="flex items-center space-x-3 mb-4 text-sm text-gray-600">
               <Mail size={16} className="text-primary" />
-              <span>ziaofficia4@gmail.com</span>
+              <span>info@elegantize.com</span>
             </div>
             <div className="flex items-center space-x-3 text-sm text-gray-600">
               <Calendar size={16} className="text-primary" />

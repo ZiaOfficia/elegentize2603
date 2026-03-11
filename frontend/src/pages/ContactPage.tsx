@@ -133,7 +133,7 @@ export const ContactPage = () => {
                     Email
                   </p>
                   <span className="text-lg font-display text-gray-800">
-                    ziaofficia4@gmail.com
+                    info@elegantize.com
                   </span>
                 </div>
               </motion.div>

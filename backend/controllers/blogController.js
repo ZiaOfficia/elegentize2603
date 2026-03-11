@@ -27,6 +27,7 @@ const getBlogs = async (req, res) => {
     // Get paginated blogs
     const blogs = await BlogPost.findAll({
       where: whereClause,
+      attributes: { exclude: ["content"] },
       order: [["createdAt", "DESC"]],
       limit,
       offset,

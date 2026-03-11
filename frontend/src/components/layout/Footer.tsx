@@ -183,7 +183,7 @@ export const Footer = () => {
                 <span>8 Di Tomas Ct, Copiague, NY, 11726</span>
               </li>
               <li className="hover:text-primary transition-colors flex items-center gap-2">
-                <Mail size={14} /> ziaofficia4@gmail.com
+                <Mail size={14} /> info@elegantize.com
               </li>
             </ul>
           </motion.div>
