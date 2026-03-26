@@ -1,6 +1,9 @@
 Options -MultiViews
 RewriteEngine On
 
+# Serve sitemap.xml via PHP proxy (transparent — no redirect, always up-to-date)
+RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
 # Handle React Router - serve index.html for all non-file routes
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
