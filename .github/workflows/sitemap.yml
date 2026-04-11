@@ -7,11 +7,16 @@ on:
     # Runs daily at 3am UTC - catches new blog posts added via the CMS/DB
     - cron: '0 3 * * *'
 
+permissions:
+  contents: write
+
 jobs:
   update-sitemap:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
