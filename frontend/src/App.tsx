@@ -23,6 +23,7 @@ import ProtectedRoute from "./components/admin/ProtectedRoute";
 import ScrollToTop from "./components/common/ScrollToTop";
 
 import ThankYouPage from "./pages/ThankYouPage";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -80,6 +81,9 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* 404 catch-all */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
