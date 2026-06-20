@@ -34,6 +34,24 @@ app.use(
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
+// Redirect broken/malformed URLs from the 404 list to the YouTube channel
+app.use((req, res, next) => {
+  const p = req.path;
+  const q = req.query;
+  if (
+    p.includes("youtube.com") ||         // YouTube-appended URLs
+    p.includes("https:/elegantize.com") || // malformed https:/ paths
+    p.endsWith("/feed") ||               // /feed/ URLs
+    p.endsWith("/feed/") ||
+    q.amp === "1" ||                     // ?amp=1
+    q.et_blog !== undefined ||           // ?et_blog
+    q.noamp === "mobile"                 // ?noamp=mobile
+  ) {
+    return res.redirect(301, "https://www.youtube.com/@elegantize");
+  }
+  next();
+});
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/blogs", blogRoutes);

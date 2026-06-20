@@ -3,19 +3,20 @@ DirectoryIndex index.html index.php
 RewriteEngine On
 RewriteBase /
 
-# Return 410 Gone for broken YouTube-appended URLs
-RewriteRule ^.*www\.youtube\.com/@elegantize.*$ - [G,NC,L]
+# 301 redirect broken YouTube-appended URLs to the YouTube channel
+RewriteRule ^.*www\.youtube\.com/@elegantize.*$ https://www.youtube.com/@elegantize [R=301,NC,L]
 
-# Return 410 for malformed https:/ paths
-RewriteRule ^.*https:/elegantize\.com.*$ - [G,NC,L]
+# 301 redirect malformed https:/ paths to YouTube
+RewriteRule ^.*https:/elegantize\.com.*$ https://www.youtube.com/@elegantize [R=301,NC,L]
 
-# Return 410 for WordPress junk parameters
+# 301 redirect WordPress junk parameters to YouTube
 RewriteCond %{QUERY_STRING} (^|&)et_blog(=|&|$) [NC,OR]
 RewriteCond %{QUERY_STRING} (^|&)amp=1(&|$) [NC,OR]
 RewriteCond %{QUERY_STRING} (^|&)noamp=mobile(&|$) [NC]
-RewriteRule ^ - [G,L]
+RewriteRule ^ https://www.youtube.com/@elegantize? [R=301,L]
 
-RewriteRule ^.*\/feed\/?$ - [G,L]
+# 301 redirect /feed/ URLs to YouTube
+RewriteRule ^.*\/feed\/?$ https://www.youtube.com/@elegantize [R=301,NC,L]
 
 # 301 redirects for duplicate slug pages
 RewriteRule ^home-4/?$ / [R=301,L]
