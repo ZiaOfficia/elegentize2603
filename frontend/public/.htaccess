@@ -3,6 +3,16 @@ DirectoryIndex index.html index.php
 RewriteEngine On
 RewriteBase /
 
+# 301 — old winter-wedding post consolidated (with or without AMP query junk)
+RewriteRule ^2024/10/01/how-to-plan-a-dream-winter-wedding-in-new-york/?$ /2024/10/01/how-to-plan-a-dream [R=301,L,QSD]
+
+# 301 — strip AMP/noamp query junk from posts that otherwise stay put
+RewriteCond %{QUERY_STRING} (^|&)(amp=1|noamp=mobile)(&|$) [NC]
+RewriteRule ^2024/10/03/5-kinds-of-candles-at-a-wedding-ceremony-night/?$ /2024/10/03/5-kinds-of-candles-at-a-wedding-ceremony-night [R=301,L,QSD]
+
+RewriteCond %{QUERY_STRING} (^|&)(amp=1|noamp=mobile)(&|$) [NC]
+RewriteRule ^2024/12/11/frosted-elegance-stunning-ideas-for-a-winter-wonderland-wedding-theme/?$ /2024/12/11/frosted-elegance-stunning-ideas-for-a-winter-wonderland-wedding-theme [R=301,L,QSD]
+
 # Return 410 Gone for broken YouTube-appended URLs
 RewriteRule ^.*www\.youtube\.com/@elegantize.*$ - [G,NC,L]
 
@@ -22,11 +32,42 @@ RewriteRule ^home-4/?$ / [R=301,L]
 RewriteRule ^home/?$ / [R=301,L]
 RewriteRule ^about-us/?$ /about [R=301,L]
 RewriteRule ^blog-2/?$ /blog [R=301,L]
-RewriteRule ^floral-design-3/?$ /floral-design [R=301,L]
-RewriteRule ^ceiling-design-2/?$ /ceiling-design [R=301,L]
+RewriteRule ^floral-design-3/?$ /services/floral-design [R=301,L]
+RewriteRule ^ceiling-design-2/?$ /services/ceiling-design [R=301,L]
 RewriteRule ^centerpiece-design-3/?$ /centerpiece-design [R=301,L]
 RewriteRule ^vinyl-floor-wraps-3/?$ /vinyl-floor-wraps [R=301,L]
 RewriteRule ^draping-services-2/?$ /draping-services [R=301,L]
+
+# 301 redirects — content moved/renamed
+RewriteRule ^ceiling-design/?$ /services/ceiling-design [R=301,L]
+RewriteRule ^floral-design/?$ /services/floral-design [R=301,L]
+RewriteRule ^2025/09/18/2025-05-05-best-time-of-year-for-outdoor-weddings/?$ /2025/09/19/best-time-of-year-for-outdoor-weddings [R=301,L]
+RewriteRule ^2026/04/15/hire-wedding-decorator-nyc-guide/?$ /2026/04/15/nj-wedding-decoration-services-guide [R=301,L]
+RewriteRule ^blog/wedding-decor-trends-2026-luxury-weddings/?$ /2026/01/19/2026-wedding-decor-trends [R=301,L]
+RewriteRule ^2025/02/06/a-luxe-wedding-decor-checklist-elevate-your-celebration/?$ /2025/02/06/indian-wedding-events-decor-checklist-guide [R=301,L]
+RewriteRule ^2025/02/12/simple-valentines-wedding-touches-with-maximum-impact/?$ /2025/02/12/simple-valentines-wedding-decor-with-maximum-impact [R=301,L]
+RewriteRule ^2024/07/21/a-spectacular-indian-wedding-event-by-elegantize-weddings/?$ /blog [R=301,L]
+RewriteRule ^2026/02/18/destination-weddings-from-nyc-elegantiz/?$ /2026/02/18/destination-weddings-from-nyc-elegantize [R=301,L]
+RewriteRule ^2025/09/18/2025-05-05-bridal-shower-decorations-trends/?$ /2025/09/18/bridal-shower-decorations-trends [R=301,L]
+RewriteRule ^2026/01/19/wedding-decor-trends-2026-luxury-weddings/?$ /2026/01/19/2026-wedding-decor-trends [R=301,L]
+
+# 301 redirects — retired paginated blog archive
+RewriteRule ^category/blog/page/2/?$ /blog [R=301,L]
+RewriteRule ^category/blog/page/3/?$ /blog?page=3 [R=301,L]
+RewriteRule ^category/blog/page/4/?$ /blog?page=4 [R=301,L]
+RewriteRule ^category/blog/page/5/?$ /blog?page=5 [R=301,L]
+RewriteRule ^category/blog/page/6/?$ /blog?page=6 [R=301,L]
+RewriteRule ^category/blog/page/8/?$ /blog [R=301,L]
+RewriteRule ^category/blog/page/9/?$ /blog [R=301,L]
+RewriteRule ^category/blog/page/14/?$ /blog?page=14 [R=301,L]
+RewriteRule ^category/blog/page/16/?$ /blog [R=301,L]
+
+# 410 Gone — retired blog posts with no replacement
+RewriteRule ^2025/01/11/10-creative-ideas-for-cocktail-table-wedding-decorations-that-wow/?$ - [G,L]
+RewriteRule ^2025/05/05/bridal-shower-decorations-trends/?$ - [G,L]
+RewriteRule ^2025/07/20/olive-green-wedding-decor-ideas/?$ - [G,L]
+RewriteRule ^2025/08/07/emerald-green-wedding-decor-is-taking-over-2025/?$ - [G,L]
+RewriteRule ^2025/07/30/creative-wedding-floor-wrap-designs/?$ - [G,L]
 
 # React SPA fallback — MUST be last
 RewriteCond %{REQUEST_FILENAME} !-f
