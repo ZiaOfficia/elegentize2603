@@ -15,14 +15,22 @@ export interface BlogPost {
 /**
  * Generate a WordPress-style date-based URL for a blog post.
  * e.g., /2026/01/21/ceiling-installation-wedding-nyc-2026
+ *
+ * The date segments MUST be derived in UTC. Local-time getters resolve the
+ * date in the viewer's own timezone, so a post created near midnight UTC
+ * produces one URL for a visitor in Delhi and a different one for Googlebot.
+ * That mismatch is what generated the duplicate off-by-one-day permalinks
+ * reported as soft 404s in Search Console.
+ *
+ * scripts/generate-sitemap.js must use identical UTC logic. Keep them in sync.
  */
 export const getBlogPostUrl = (slug: string, createdAt?: string): string => {
   const cleanSlug = slug.replace(/^\/+/, "");
   if (createdAt) {
     const d = new Date(createdAt);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
     return `/${year}/${month}/${day}/${cleanSlug}`;
   }
   // Fallback if no createdAt

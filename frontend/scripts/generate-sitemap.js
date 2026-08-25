@@ -60,10 +60,14 @@ async function generate() {
 
   const blogUrls = posts
     .map((post) => {
+      // UTC getters only — must match getBlogPostUrl() in src/data/blogData.ts.
+      // Local-time getters make the permalink depend on the timezone of the
+      // machine running the build, which produced the duplicate off-by-one-day
+      // URLs reported as soft 404s in Search Console.
       const d = new Date(post.createdAt);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
+      const year = d.getUTCFullYear();
+      const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(d.getUTCDate()).padStart(2, "0");
       const cleanSlug = post.slug.replace(/^\/+/, "").trim().toLowerCase();
       const lastmod = new Date(post.updatedAt).toISOString().split("T")[0];
       return `  <url>
