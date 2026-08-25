@@ -170,7 +170,14 @@ loop, and a dead server.
 
 ## Still outstanding
 
-- **Build and upload.** Nothing here has reached the server.
+- **Build and upload.** Nothing here has reached the server. Production is still
+  serving the pre-audit `.htaccess`, which carries five `410` rules (lines 66-71).
+  Only one of them is urgent: `^2025/07/20/olive-green-wedding-decor-ideas` blocks
+  a **canonical** sitemap URL, so it is deindexing a live article and deleting that
+  single line is a complete fix needing no upload. The other four block *wrong-date
+  duplicates*; there the `410` costs consolidation and link equity, not indexation,
+  and the `301`s recover it on upload. Do **not** delete those four early - that
+  swaps a clean `410` for a soft-404 shell, the exact failure this report is about.
 - **Prerendering.** The 81 URLs from Cause 1 stay soft 404s until posts ship real HTML.
   Plan: Puppeteer over the canonical route list after `vite build`, writing flat
   `dist/<route>.html` files (not `<route>/index.html`, which fights `DirectorySlash`).
