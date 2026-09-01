@@ -129,6 +129,17 @@ RewriteRule ^2025/12/17/cherry-blossom-tree-centerpieces-winter-weddings/?$ /202
 RewriteRule ^2025/12/17/tall-centerpieces-large-ballrooms-design-guide/?$ /2025/12/18/tall-centerpieces-large-ballrooms-design-guide [R=301,L]
 RewriteRule ^2026/01/21/ceiling-installation-wedding-nyc-2026/?$ /2026/01/20/ceiling-installation-wedding-nyc-2026 [R=301,L]
 
+# ---- WordPress-era dates recovered from the old.elegantize.com sitemap
+#      (18 Feb 2026 snapshot). Never present in the Search Console export,
+#      so the generated map could not see them. Same date-drift shape as above.
+#      Gate-checked: source not canonical, target canonical, no chain, no dupe.
+RewriteRule ^2024/03/05/6-classic-decor-new-york-decor-ideas-for-new-york-weddings/?$ /2024/03/04/6-classic-decor-new-york-decor-ideas-for-new-york-weddings [R=301,L]
+RewriteRule ^2024/09/25/elegant-wedding-decoration-ideas-for-new-york-venues/?$ /2024/09/24/elegant-wedding-decoration-ideas-for-new-york-venues [R=301,L]
+RewriteRule ^2025/01/08/a-guide-to-2025-new-year-wedding-themes/?$ /2025/01/07/a-guide-to-2025-new-year-wedding-themes [R=301,L]
+RewriteRule ^2025/06/25/mandap-decor-in-new-york/?$ /2025/06/24/mandap-decor-in-new-york [R=301,L]
+RewriteRule ^2025/07/07/stylish-outdoor-artificial-flowers-to-transform-your-wedding-into-a-floral-wonderland/?$ /2025/07/06/stylish-outdoor-artificial-flowers-to-transform-your-wedding-into-a-floral-wonderland [R=301,L]
+RewriteRule ^2025/11/18/wedding-decor-process-elegantize/?$ /2025/11/17/wedding-decor-process-elegantize [R=301,L]
+
 # ---- renamed slugs: VERIFY each before deploying ----
 RewriteRule ^2025/09/19/best-time-of-year-for-outdoor-weddings-in-the-usa/?$ /2025/09/18/best-time-of-year-for-outdoor-weddings [R=301,L]
 
@@ -176,6 +187,16 @@ RewriteRule ^(.+?)/?$ /$1.html [L]
 
 # ---------------------------------------------------------------------------
 # 9. REACT SPA FALLBACK — MUST BE LAST
+#
+# !! CHANGE THESE TWO LINES IN THE SAME DEPLOY AS THE FIRST PRERENDER BUILD !!
+# Once scripts/prerender.mjs runs, dist/index.html IS the prerendered homepage.
+# If this fallback still points at it, every unknown URL serves homepage content
+# with a 200 — recreating the soft 404s. The build writes dist/app-shell.html
+# (the untouched shell) and dist/404.html for exactly this purpose.
+# Do NOT switch early: app-shell.html does not exist until that build runs.
+#
+#   ErrorDocument 404 /404.html
+#   RewriteRule . /app-shell.html [L]
 # ---------------------------------------------------------------------------
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
