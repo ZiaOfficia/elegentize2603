@@ -153,6 +153,9 @@ RewriteRule ^2025/07/30/creative-wedding-floor-wrap-designs/?$ /2025/07/29/creat
 # ---------------------------------------------------------------------------
 RewriteRule ^category/blog/page/[0-9]+/?$ /blog [R=301,L]
 RewriteRule ^category/.*$ /blog [R=301,L]
+RewriteRule ^blog/page/[0-9]+/?$ /blog [R=301,L]
+RewriteRule ^pages/?$ / [R=301,L]
+RewriteRule ^media/?$ / [R=301,L]
 
 # ---------------------------------------------------------------------------
 # 7b. TRAILING-SLASH CANONICALISATION
