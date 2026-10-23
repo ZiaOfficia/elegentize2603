@@ -198,6 +198,8 @@ RewriteRule ^(.+?)/?$ /$1.html [L]
 #   ErrorDocument 404 /404.html
 #   RewriteRule . /app-shell.html [L]
 # ---------------------------------------------------------------------------
+# Switched 23 Oct 2026, shipped together with the first prerender build.
+ErrorDocument 404 /404.html
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.html [L]
+RewriteRule . /app-shell.html [L]

@@ -37,7 +37,7 @@ const API = "https://elegantize-zl57.onrender.com";
 const ORIGIN = "https://elegantize.com";
 
 const PORT = 4178;
-const CONCURRENCY = 3;
+const CONCURRENCY = 2;
 const NAV_TIMEOUT = 90_000;   // generous: first paint can wait on a cold API
 const MIN_TEXT = 400;         // chars of rendered text below which we call it empty
 
@@ -93,22 +93,68 @@ async function warmApi() {
 }
 
 // ---------------------------------------------------------------------------
+// API calls from the build browser are blocked by the backend's CORS list
+// (it only allows elegantize.com / localhost:5173 / 3000, not 127.0.0.1:4178).
+// So the page's requests to the API are intercepted and fetched here in Node,
+// where CORS does not apply, then handed back to the page with an allow header.
+// Real visitors are unaffected; this only runs inside the build.
+// ---------------------------------------------------------------------------
+async function proxyApi(page, stats) {
+  await page.setRequestInterception(true);
+  page.on("request", async (req) => {
+    if (!req.url().startsWith(API)) return req.continue();
+    if (req.method() === "OPTIONS") {
+      return req.respond({ status: 204, headers: {
+        "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS" } });
+    }
+    try {
+      const r = await fetch(req.url(), { signal: AbortSignal.timeout(60_000) });
+      stats.api = `${r.status} ${req.url().replace(API, "")}`;
+      return req.respond({
+        status: r.status,
+        headers: { "Content-Type": r.headers.get("content-type") ?? "application/json",
+                   "Access-Control-Allow-Origin": "*" },
+        body: Buffer.from(await r.arrayBuffer()),
+      });
+    } catch (e) {
+      stats.api = `network error ${req.url().replace(API, "")}: ${e.message}`;
+      return req.abort();
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Render one route
 // ---------------------------------------------------------------------------
 const isPost = (r) => /^\/\d{4}\/\d{2}\/\d{2}\//.test(r);
 
 async function render(browser, route) {
-  const page = await browser.newPage();
-  await page.setViewport({ width: 1360, height: 900 });
-  page.setDefaultNavigationTimeout(NAV_TIMEOUT);
+  let page;
+  const stats = { api: "no API call made" };
   try {
+    page = await browser.newPage();
+    await page.setViewport({ width: 1360, height: 900 });
+    page.setDefaultNavigationTimeout(NAV_TIMEOUT);
+    await proxyApi(page, stats);
     await page.goto(`http://127.0.0.1:${PORT}${route}`, { waitUntil: "domcontentloaded" });
 
-    // A blog post only renders <h1> in its success branch. The loading and
-    // "Article Not Found" branches render <h2>, so h1 is a real discriminator.
-    await page.waitForSelector(isPost(route) ? "#root h1" : "#root h1, #root main, #root article", {
-      timeout: NAV_TIMEOUT,
-    });
+    // A blog post only renders <h1> in its success branch. "Article Not Found"
+    // renders an <h2>, so stop waiting as soon as either appears — otherwise a
+    // failed post burns the full timeout and hides the real reason.
+    if (isPost(route)) {
+      await page.waitForFunction(
+        () => document.querySelector("#root h1") ||
+              /Article Not Found/i.test(document.getElementById("root")?.innerText ?? ""),
+        { timeout: NAV_TIMEOUT },
+      );
+      const notFound = await page.evaluate(() => !document.querySelector("#root h1"));
+      if (notFound) throw new Error(`"Article Not Found" (API: ${stats.api})`);
+    } else {
+      await page.waitForSelector("#root h1, #root main, #root article", { timeout: NAV_TIMEOUT });
+    }
+    // Give lists that load from the API (blog index, homepage blog section) a moment.
+    await new Promise((r) => setTimeout(r, 1500));
 
     const probe = await page.evaluate(() => ({
       text: (document.getElementById("root")?.innerText ?? "").trim(),
@@ -126,9 +172,9 @@ async function render(browser, route) {
     await fs.writeFile(out, html, "utf-8");
     return { route, ok: true, chars: probe.text.length, title: probe.title, canonical: probe.canonical };
   } catch (err) {
-    return { route, ok: false, error: err.message };
+    return { route, ok: false, error: `${err.message.split("\n")[0]} (API: ${stats.api})` };
   } finally {
-    await page.close();
+    await page?.close().catch(() => {});
   }
 }
 
@@ -146,7 +192,7 @@ async function main() {
 
   const server = serve(shell);
   await new Promise((r) => server.listen(PORT, r));
-  const browser = await puppeteer.launch({ args: ["--no-sandbox"] });
+  const browser = await puppeteer.launch({ args: ["--no-sandbox"], protocolTimeout: 180_000 });
 
   const results = [];
   const queue = [...list];
@@ -165,6 +211,7 @@ async function main() {
 
   // 404 page, so unknown routes can be served with a real 404 status
   const p = await browser.newPage();
+  await proxyApi(p, {});
   await p.goto(`http://127.0.0.1:${PORT}/__definitely-not-a-route__`, { waitUntil: "networkidle0" });
   await fs.writeFile(path.join(DIST, "404.html"), await p.content(), "utf-8");
   await p.close();
