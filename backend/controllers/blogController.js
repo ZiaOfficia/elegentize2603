@@ -1,5 +1,10 @@
 const BlogPost = require("../models/BlogPost");
 
+// Slugs must never start or end with "/" or spaces. A trailing "/" typed in the
+// admin panel made /2026/10/17/wedding-decor-cost-long-island show
+// "Article Not Found" and broke the prerender build.
+const cleanSlugOf = (slug = "") => String(slug).trim().replace(/^\/+|\/+$/g, "").trim();
+
 // Trigger GitHub Actions sitemap workflow after blog changes
 async function triggerSitemapUpdate() {
   try {
@@ -95,9 +100,10 @@ const getBlogById = async (req, res) => {
 const getBlogBySlug = async (req, res) => {
   try {
     const { Op } = require("sequelize");
-    const cleanSlug = req.params.slug.replace(/^\/+/, "");
+    const cleanSlug = cleanSlugOf(req.params.slug);
+    // Older posts may be stored with a stray leading or trailing "/"
     const blog = await BlogPost.findOne({
-      where: { slug: { [Op.in]: [cleanSlug, `/${cleanSlug}`] } },
+      where: { slug: { [Op.in]: [cleanSlug, `/${cleanSlug}`, `${cleanSlug}/`, `/${cleanSlug}/`] } },
     });
     if (blog) {
       res.json(blog);
@@ -131,7 +137,7 @@ const createBlog = async (req, res) => {
 
     const blog = await BlogPost.create({
       title,
-      slug: slug.replace(/^\/+/, ""),
+      slug: cleanSlugOf(slug),
       excerpt,
       content,
       author,
@@ -170,7 +176,7 @@ const updateBlog = async (req, res) => {
 
     if (blog) {
       const updateData = { ...req.body };
-      if (updateData.slug) updateData.slug = updateData.slug.replace(/^\/+/, "");
+      if (updateData.slug) updateData.slug = cleanSlugOf(updateData.slug);
       await blog.update(updateData);
       res.json(blog);
 
