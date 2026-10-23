@@ -7,10 +7,21 @@ on:
     paths:
       - 'frontend/**'
   workflow_dispatch:
+  # Rebuild after the sitemap update, so new blog posts get prerendered
+  workflow_run:
+    workflows: ["Update Sitemap"]
+    types: [completed]
+    branches: [main]
+
+# Never run two FTP uploads at the same time
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout repository
