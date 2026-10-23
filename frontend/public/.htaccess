@@ -63,6 +63,8 @@ RewriteRule ^2025/02/12/simple-valentines-wedding-touches-with-maximum-impact/?$
 RewriteRule ^2024/07/21/a-spectacular-indian-wedding-event-by-elegantize-weddings/?$ /2024/07/21/lavish-indian-wedding-events-hartford-marriott-by-elegantize-weddings [R=301,L]
 RewriteRule ^2026/02/18/destination-weddings-from-nyc-elegantiz/?$ /2026/02/18/destination-weddings-from-nyc-elegantize [R=301,L]
 RewriteRule ^2026/01/19/wedding-decor-trends-2026-luxury-weddings/?$ /2026/01/19/2026-wedding-decor-trends [R=301,L]
+RewriteRule ^decorating-a-cocktail-table-ideas/?$ /2025/01/10/10-creative-ideas-for-cocktail-table-wedding-decorations-that-wow [R=301,L]
+RewriteRule ^2024/12/10/how-to-keep-your-guests-warm-and-comfortable-at-a-winter-wonderland-wedding/?$ /2024/12/11/how-to-keep-your-guests-warm-and-comfortable-at-a-winter-wonderland-wedding [R=301,L]
 
 
 # ===========================================================================
