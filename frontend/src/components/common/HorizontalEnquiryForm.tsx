@@ -42,7 +42,7 @@ export const HorizontalEnquiryForm = () => {
         message: formData.message,
         venue: formData.venue,
         budget: formData.budget,
-        serviceName: "Inquiry Started",
+        source: "Horizontal Enquiry Form",
       });
 
       sendEmailNotification({

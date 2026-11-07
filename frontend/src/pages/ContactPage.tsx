@@ -169,7 +169,8 @@ export const ContactPage = () => {
                   eventDate: data.weddingDate,
                   venue: data.venue,
                   budget: data.budget,
-                  serviceName: "Contact Page Form",
+                  message: data.message,
+                  source: "Contact Page Form",
                 });
 
                 sendEmailNotification({

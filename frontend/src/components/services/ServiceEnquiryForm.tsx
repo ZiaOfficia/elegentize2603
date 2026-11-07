@@ -34,6 +34,7 @@ export const ServiceEnquiryForm = ({
         eventDate: formData.eventDate,
         message: formData.message,
         serviceName: serviceName || "Inquiry",
+        source: `Service Page Form (${variant})`,
       });
 
       sendEmailNotification({

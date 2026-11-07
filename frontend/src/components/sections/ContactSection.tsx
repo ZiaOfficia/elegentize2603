@@ -28,7 +28,7 @@ export const ContactSection = () => {
         phone: formData.phone,
         eventDate: formData.weddingDate,
         message: formData.message,
-        serviceName: "General Contact",
+        source: "Contact Section Form",
       });
 
       sendEmailNotification({

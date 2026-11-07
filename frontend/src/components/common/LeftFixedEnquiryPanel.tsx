@@ -52,7 +52,7 @@ export const LeftFixedEnquiryPanel = () => {
                   eventDate: formData.get("eventDate") as string,
                   venue: formData.get("venue") as string,
                   budget: formData.get("budget") as string,
-                  serviceName: "Side Panel Inquiry",
+                  source: "Side Panel Enquiry",
                 });
 
                 sendEmailNotification({

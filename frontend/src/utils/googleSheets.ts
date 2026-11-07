@@ -5,9 +5,81 @@ export interface EnquiryData {
   eventDate?: string;
   message?: string;
   serviceName?: string;
-   venue?: string;   
-  budget?: string;  
+  venue?: string;
+  budget?: string;
+  /** Which form on the site the lead came from, e.g. "Home - Side Panel". */
+  source?: string;
 }
+
+const ATTRIBUTION_KEY = "elegantize_lead_attribution";
+const TRACKING_PARAMS = [
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_term",
+  "utm_content",
+  "gclid",
+  "fbclid",
+] as const;
+
+interface Attribution {
+  landingPage: string;
+  referrer: string;
+  [key: string]: string;
+}
+
+const safeStorage = {
+  get(key: string): string | null {
+    try {
+      return sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  set(key: string, value: string) {
+    try {
+      sessionStorage.setItem(key, value);
+    } catch {
+      /* ignore */
+    }
+  },
+};
+
+/**
+ * Records where the visitor first arrived from (landing page, external referrer, UTM/ad click ids).
+ * Stored for the session so it survives SPA navigation to the page where the form is submitted.
+ */
+export const captureLeadAttribution = (): Attribution => {
+  const existing = safeStorage.get(ATTRIBUTION_KEY);
+  const params = new URLSearchParams(window.location.search);
+  const hasTracking = TRACKING_PARAMS.some((p) => params.get(p));
+
+  if (existing && !hasTracking) {
+    try {
+      return JSON.parse(existing) as Attribution;
+    } catch {
+      /* fall through and recapture */
+    }
+  }
+
+  const attribution: Attribution = {
+    landingPage: window.location.href,
+    referrer: document.referrer || "Direct",
+  };
+  TRACKING_PARAMS.forEach((p) => {
+    attribution[p] = params.get(p) || "";
+  });
+
+  safeStorage.set(ATTRIBUTION_KEY, JSON.stringify(attribution));
+  return attribution;
+};
+
+const getDevice = () => {
+  const ua = navigator.userAgent;
+  if (/iPad|Tablet/i.test(ua)) return "Tablet";
+  if (/Mobi|Android|iPhone/i.test(ua)) return "Mobile";
+  return "Desktop";
+};
 
 export const submitToGoogleSheets = async (
   data: EnquiryData,
@@ -19,33 +91,28 @@ export const submitToGoogleSheets = async (
     return { success: false, message: "Configuration error." };
   }
 
+  const attribution = captureLeadAttribution();
+
+  const payload = {
+    ...data,
+    source: data.source || data.serviceName || "Website",
+    pageUrl: window.location.href,
+    pageTitle: document.title,
+    device: getDevice(),
+    ...attribution,
+  };
+
   try {
-    // The "no-cors" mode is often required for Google App Script Web Apps
-    // when called from the browser to avoid CORS errors,
-    // BUT "no-cors" means we can't read the response status/body.
-    // However, Google App Script can return CORS headers (as I added in the plan).
-    // If the user deployed the script with the CORS headers, standard POST works.
-    // Given the script I provided has `doOptions` and headers, we'll try standard POST first.
-
-    // Note: Google App Script redirects 302 to the content.
-    // fetch follows redirects automatically.
-
-    // We'll use 'no-cors' if standard fails, or just default to it if we want to be safe.
-    // Actually, sending JSON with 'no-cors' is tricky (content-type is ignored).
-    // The script expects JSON.
-    // We use mode: 'no-cors' because Google Apps Script redirects (302) 
-    // often trigger CORS blocks in browsers even with correct headers.
-    // This ensures the data ARRIVES at the sheet, even if we can't read the response.
+    // no-cors: Apps Script's 302 redirect trips CORS in browsers; the data still arrives.
     await fetch(GOOGLE_SHEET_URL, {
       method: "POST",
       mode: "no-cors",
       headers: {
         "Content-Type": "text/plain;charset=utf-8",
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
 
-    // With no-cors, we assume success if the fetch doesn't throw.
     return { success: true };
   } catch (error) {
     console.error("Error submitting to Google Sheets:", error);
