@@ -37,7 +37,13 @@ const cleanContent = (html: string) =>
 const readingMinutes = (html: string) =>
   Math.max(
     1,
-    Math.round(html.replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length / 220),
+    Math.round(
+      html
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;|&#160;|\u00A0/gi, " ") // old posts join every word with &nbsp;
+        .split(/\s+/)
+        .filter(Boolean).length / 220,
+    ),
   );
 
 export const BlogPostPage = () => {
@@ -71,8 +77,8 @@ export const BlogPostPage = () => {
 
   if (!summary) return <NotFound />;
 
-  // One address per post: old links with a drifted date or /blog/<slug>
-  // are sent to the canonical date URL (the same one in sitemap.xml).
+  // One address per post: old date links (/YYYY/MM/DD/<slug>) are sent
+  // to the canonical /blog/<slug> URL (the same one in sitemap.xml).
   const canonicalPath = getBlogPostUrl(summary.slug, summary.createdAt);
   if (pathname.replace(/\/+$/, "") !== canonicalPath) {
     return <Navigate to={canonicalPath} replace />;

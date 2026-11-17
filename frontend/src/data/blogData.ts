@@ -51,23 +51,15 @@ export const FALLBACK_POST_IMAGE = "/images/portfolio/dsc00085.webp";
 export const allPosts: BlogSummary[] = blogIndex;
 
 /**
- * WordPress-style date URL, e.g. /2026/01/21/ceiling-installation-wedding-nyc-2026
+ * Canonical post URL, e.g. /blog/ceiling-installation-wedding-nyc-2026
  *
- * The date segments MUST be derived in UTC, or a visitor in another timezone
- * gets a different URL than Googlebot (see docs/soft-404-remediation.md).
+ * Old WordPress date URLs (/2026/01/21/<slug>) are 301-redirected here by
+ * public/.htaccess and, client-side, by BlogPostPage.
  * scripts/build-blog.mjs builds sitemap URLs the same way.
  */
-export const getBlogPostUrl = (slug: string, createdAt?: string): string => {
-  const cleanSlug = slug.replace(/^\/+/, "");
-  if (createdAt) {
-    const d = new Date(createdAt);
-    const year = d.getUTCFullYear();
-    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
-    const day = String(d.getUTCDate()).padStart(2, "0");
-    return `/${year}/${month}/${day}/${cleanSlug}`;
-  }
-  return `/blog/${cleanSlug}`;
-};
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getBlogPostUrl = (slug: string, _createdAt?: string): string =>
+  `/blog/${slug.replace(/^\/+/, "")}`;
 
 /** "October 17, 2026" — fixed locale and UTC so every visitor sees the same date. */
 export const formatPostDate = (iso: string): string =>

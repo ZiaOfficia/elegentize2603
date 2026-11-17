@@ -210,7 +210,7 @@ function readPosts() {
   return posts;
 }
 
-const postPath = (p) => `/${p.createdAt.slice(0, 4)}/${p.createdAt.slice(5, 7)}/${p.createdAt.slice(8, 10)}/${p.slug}`;
+const postPath = (p) => `/blog/${p.slug}`;
 
 // ---------------------------------------------------------------------------
 // write outputs
@@ -254,12 +254,16 @@ function writeOutputs(posts) {
 // import or an accidentally deleted file from wiping pages off the live site.
 function checkNothingLost(posts) {
   if (!fs.existsSync(SITEMAP_FILE)) return;
-  const before = [...fs.readFileSync(SITEMAP_FILE, "utf8").matchAll(/<loc>\s*https?:\/\/[^/<]+(\/\d{4}\/\d{2}\/\d{2}\/[^<\s]+?)\/?\s*<\/loc>/g)].map((m) => m[1]);
-  const now = new Set(posts.map(postPath));
+  // Matches both the current /blog/<slug> URLs and the older /YYYY/MM/DD/<slug>
+  // ones; a post counts as kept if its slug is still published.
+  const before = [...fs.readFileSync(SITEMAP_FILE, "utf8").matchAll(/<loc>\s*https?:\/\/[^/<]+(\/(?:blog|\d{4}\/\d{2}\/\d{2})\/([^<\s/]+))\/?\s*<\/loc>/g)].map((m) => ({ url: m[1], slug: m[2] }));
+  const now = new Set(posts.map((p) => p.slug));
   const htaccess = fs.existsSync(path.join(PUBLIC_DIR, ".htaccess"))
     ? fs.readFileSync(path.join(PUBLIC_DIR, ".htaccess"), "utf8")
     : "";
-  const lost = before.filter((u) => !now.has(u) && !htaccess.includes(`^${u.slice(1)}/?$`));
+  const lost = before
+    .filter(({ url, slug }) => !now.has(slug) && !htaccess.includes(`^${url.slice(1)}/?$`))
+    .map(({ url }) => url);
   if (!lost.length) return;
   const shown = lost.slice(0, 10).map((u) => `      ${SITE}${u}`).join("\n");
   fail(

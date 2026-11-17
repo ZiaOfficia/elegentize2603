@@ -78,7 +78,7 @@ function serve(shellHtml) {
 // ---------------------------------------------------------------------------
 // Render one route
 // ---------------------------------------------------------------------------
-const isPost = (r) => /^\/\d{4}\/\d{2}\/\d{2}\//.test(r);
+const isPost = (r) => /^\/blog\/[^/]+$/.test(r);
 
 async function render(browser, route) {
   let page;
