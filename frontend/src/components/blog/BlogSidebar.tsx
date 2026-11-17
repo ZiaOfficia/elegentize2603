@@ -1,52 +1,18 @@
 import { Search, Facebook, Instagram, Youtube } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "../common/Button";
-import { API_BASE_URL } from "../../config";
-import { getBlogPostUrl } from "../../data/blogData";
-
-interface SidebarPost {
-  id: string;
-  title: string;
-  slug: string;
-  createdAt?: string;
-  date: string;
-  image: string;
-}
+import {
+  allPosts,
+  formatPostDate,
+  getBlogPostUrl,
+  FALLBACK_POST_IMAGE,
+} from "../../data/blogData";
 
 export const BlogSidebar = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [recentPosts, setRecentPosts] = useState<SidebarPost[]>([]);
+  const recentPosts = allPosts.slice(0, 4);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchRecentPosts = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/blogs`);
-        if (response.ok) {
-          const data = await response.json();
-          const posts = data.blogs || [];
-          const formatted = posts.slice(0, 4).map((post: any) => ({
-            id: post.id,
-            title: post.title,
-            slug: post.slug,
-            createdAt: post.createdAt,
-            date: new Date(post.createdAt).toLocaleDateString(),
-            image: post.image_url
-              ? post.image_url.startsWith("http")
-                ? post.image_url
-                : `${API_BASE_URL}${post.image_url}`
-              : "https://images.unsplash.com/photo-1499750310159-5b600cdf0325",
-          }));
-          setRecentPosts(formatted);
-        }
-      } catch (error) {
-        console.error("Error fetching recent posts:", error);
-      }
-    };
-
-    fetchRecentPosts();
-  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +47,7 @@ export const BlogSidebar = () => {
         <div className="space-y-6">
           {recentPosts.map((post) => (
             <Link
-              key={post.id}
+              key={post.slug}
               to={getBlogPostUrl(post.slug, post.createdAt)}
               className="flex gap-4 group"
             >
@@ -89,8 +55,8 @@ export const BlogSidebar = () => {
                 <img
                   loading="lazy"
                   decoding="async"
-                  src={post.image}
-                  alt={post.title}
+                  src={post.image || FALLBACK_POST_IMAGE}
+                  alt={post.imageAlt}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
               </div>
@@ -98,7 +64,9 @@ export const BlogSidebar = () => {
                 <h4 className="font-display text-sm leading-tight text-gray-900 group-hover:text-primary transition-colors break-words">
                   {post.title}
                 </h4>
-                <p className="text-xs text-gray-500 mt-1">{post.date}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {formatPostDate(post.createdAt)}
+                </p>
               </div>
             </Link>
           ))}

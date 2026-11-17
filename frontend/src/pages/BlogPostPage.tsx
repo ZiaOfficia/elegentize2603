@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, Navigate, useLocation } from "react-router-dom";
 import { SEO } from "../components/common/SEO";
 
 import {
@@ -11,117 +11,95 @@ import {
   Twitter,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { BlogPost } from "../data/blogData";
-import { getBlogPostUrl } from "../data/blogData"; // For type definition
-import { API_BASE_URL } from "../config";
+import type { BlogPostFull } from "../data/blogData";
+import {
+  findPost,
+  formatPostDate,
+  getBlogPostUrl,
+  FALLBACK_POST_IMAGE,
+} from "../data/blogData";
 import { RelatedPosts } from "../components/blog/RelatedPosts";
 import { HorizontalEnquiryForm } from "../components/common/HorizontalEnquiryForm";
 import { ContactSection } from "../components/sections/ContactSection";
+import NotFound from "./NotFound";
+
+/** Same clean-up the site has always applied to post bodies. */
+const cleanContent = (html: string) =>
+  html
+    .replace(/\u00AD/g, "") // soft hyphens
+    .replace(/&shy;/gi, "")
+    .replace(/<wbr\s*\/?>/gi, "")
+    .replace(/[\u200B\u200C\u200D]/g, "") // zero-width characters
+    .replace(/\s+style\s*=\s*"[^"]*"/gi, "") // inline styles
+    .replace(/\s+style\s*=\s*'[^']*'/gi, "");
+
+/** Rough reading time at 220 words per minute. */
+const readingMinutes = (html: string) =>
+  Math.max(
+    1,
+    Math.round(html.replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length / 220),
+  );
 
 export const BlogPostPage = () => {
-  const { slug } = useParams<{
+  const { slug = "" } = useParams<{
     year?: string;
     month?: string;
     day?: string;
     slug: string;
   }>();
-  const [post, setPost] = useState<
-    | (BlogPost & {
-        metaTitle?: string;
-        metaDescription?: string;
-        metaKeywords?: string;
-      })
-    | null
-  >(null);
-  const [loading, setLoading] = useState(true);
+  const { pathname } = useLocation();
+  const summary = findPost(slug);
+  const [full, setFull] = useState<BlogPostFull | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/blogs/${slug}`);
-        if (response.ok) {
-          const data = await response.json();
-          const formattedPost: BlogPost & {
-            metaTitle?: string;
-            metaDescription?: string;
-            metaKeywords?: string;
-          } = {
-            id: data.id,
-            title: data.title,
-            slug: data.slug,
-            excerpt: data.excerpt
-              ? data.excerpt
-                  .replace(/<!--[\s\S]*?-->/g, "")
-                  .replace(/<[^>]+>/g, "")
-                  .substring(0, 150) + "..."
-              : "",
-            content: (data.content || "")
-              .replace(/\u00AD/g, "") // Remove soft hyphens (Unicode)
-              .replace(/&shy;/gi, "") // Remove soft hyphens (HTML entity)
-              .replace(/<wbr\s*\/?>/gi, "") // Remove <wbr> tags
-              .replace(/\u200B/g, "") // Remove zero-width spaces
-              .replace(/\u200C/g, "") // Remove zero-width non-joiners
-              .replace(/\u200D/g, "") // Remove zero-width joiners
-              .replace(/\s+style\s*=\s*"[^"]*"/gi, "") // Strip inline styles (double quotes)
-              .replace(/\s+style\s*=\s*'[^']*'/gi, ""), // Strip inline styles (single quotes)
-            createdAt: data.createdAt,
-            date: new Date(data.createdAt).toLocaleDateString(),
-            author: data.author,
-            category: data.category,
-            image: data.image_url
-              ? data.image_url.startsWith("http")
-                ? data.image_url
-                : `${API_BASE_URL}${data.image_url}`
-              : "https://images.unsplash.com/photo-1499750310159-5b600cdf0325",
-            tags: data.tags || "",
-            metaTitle: data.meta_title || "",
-            metaDescription: data.meta_description || "",
-            metaKeywords: data.meta_keywords || "",
-          };
-          setPost(formattedPost);
-        }
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching post:", error);
-        setLoading(false);
-      }
-    };
-
     window.scrollTo(0, 0);
-    if (slug) fetchPost();
-  }, [slug]);
+    if (!summary) return;
+    let cancelled = false;
+    fetch(`/blog-data/${summary.slug}.json`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((data: BlogPostFull) => {
+        if (!cancelled) setFull({ ...data, content: cleanContent(data.content) });
+      })
+      .catch(() => {
+        if (!cancelled) setLoadError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [summary]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen pt-40 flex flex-col items-center justify-center">
-        <h2 className="text-xl font-display text-gray-500">
-          Loading Article...
-        </h2>
-      </div>
-    );
+  if (!summary) return <NotFound />;
+
+  // One address per post: old links with a drifted date or /blog/<slug>
+  // are sent to the canonical date URL (the same one in sitemap.xml).
+  const canonicalPath = getBlogPostUrl(summary.slug, summary.createdAt);
+  if (pathname.replace(/\/+$/, "") !== canonicalPath) {
+    return <Navigate to={canonicalPath} replace />;
   }
 
-  if (!post) {
-    return (
-      <div className="min-h-screen pt-40 flex flex-col items-center justify-center">
-        <SEO title="Article Not Found" />
-        <h2 className="text-3xl font-display mb-4">Article Not Found</h2>
-        <Link to="/blog" className="text-primary hover:underline">
-          Return to Journal
-        </Link>
-      </div>
-    );
-  }
+  const post = {
+    ...summary,
+    content: full?.content ?? "",
+    metaKeywords: full?.metaKeywords ?? "",
+    image: summary.image || FALLBACK_POST_IMAGE,
+    date: formatPostDate(summary.createdAt),
+  };
 
   return (
     <div className="pt-[60px] md:pt-[50px] pb-24 bg-white">
       <SEO
         title={post.metaTitle || post.title}
         description={post.metaDescription || post.excerpt}
-        keywords={post.metaKeywords}
+        keywords={post.metaKeywords || undefined}
         image={post.image}
-        url={getBlogPostUrl(post.slug, post.createdAt)}
+        url={canonicalPath}
         type="article"
+        article={{
+          publishedAt: post.createdAt,
+          modifiedAt: post.updatedAt,
+          author: post.author,
+        }}
       />
       <div className="max-w-4xl mx-auto px-6 mb-12 text-center">
         {/* Breadcrumb */}
@@ -158,12 +136,14 @@ export const BlogPostPage = () => {
           <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block"></span>
           <span className="flex items-center gap-2">
             <Calendar size={16} className="text-primary" />
-            <span>{post.date}</span>
+            <time dateTime={post.createdAt.slice(0, 10)}>{post.date}</time>
           </span>
           <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block"></span>
           <span className="flex items-center gap-2">
             <Clock size={16} className="text-primary" />
-            <span>5 min read</span>
+            <span>
+              {post.content ? readingMinutes(post.content) : 5} min read
+            </span>
           </span>
         </div>
       </div>
@@ -171,13 +151,30 @@ export const BlogPostPage = () => {
       {/* Featured Image */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 mb-16">
         <div className="w-full overflow-hidden rounded-2xl shadow-sm">
-          <img loading="lazy" decoding="async" src={post.image} alt={post.title} className="w-full h-auto" />
+          <img
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            src={post.image}
+            alt={post.imageAlt}
+            className="w-full h-auto"
+          />
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-6 pb-24">
         {/* Main Content */}
-        <article className="w-full">
+        <article
+          className="w-full"
+          data-content-ready={post.content ? "true" : undefined}
+        >
+          {!post.content && (
+            <p className="text-center text-gray-400 py-12">
+              {loadError
+                ? "Sorry, this article could not be loaded. Please refresh the page."
+                : "Loading article..."}
+            </p>
+          )}
           {/* Content Injection */}
           <div
             className="prose prose-lg prose-stone w-full max-w-none wrap-break-word [hyphens:none] [word-break:normal]
@@ -277,9 +274,7 @@ export const BlogPostPage = () => {
         </article>
       </div>
 
-      {post && (
-        <RelatedPosts currentPostId={post.id} category={post.category} />
-      )}
+      <RelatedPosts slug={post.slug} />
       <HorizontalEnquiryForm />
       <ContactSection />
     </div>

@@ -2,10 +2,8 @@ import { Button } from "../common/Button";
 import { ArrowRight } from "lucide-react";
 import { motion, type Variants } from "framer-motion";
 import { BlogCard } from "../blog/BlogCard";
-import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { API_BASE_URL } from "../../config";
-import type { BlogPost } from "../../data/blogData";
+import { allPosts, toCard } from "../../data/blogData";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -27,59 +25,9 @@ const itemVariants: Variants = {
 };
 
 export const BlogSection = () => {
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
+  const recentPosts = allPosts.slice(0, 3).map(toCard);
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        // Fetch only 3 posts for homepage
-        const response = await fetch(`${API_BASE_URL}/api/blogs?limit=3`);
-        const data = await response.json();
-
-        // Handle both array format (old) and paginated object format (new)
-        const postsArray = Array.isArray(data) ? data : data.blogs || [];
-
-        const formattedPosts: BlogPost[] = postsArray.map(
-          (post: BlogPost & { image_url?: string; createdAt?: string }) => ({
-            id: post.id,
-            title: post.title,
-            slug: post.slug,
-            excerpt: post.excerpt
-              ? post.excerpt
-                  .replace(/<!--[\s\S]*?-->/g, "")
-                  .replace(/<[^>]+>/g, "")
-                  .substring(0, 300)
-              : "",
-            content: post.content,
-            createdAt: post.createdAt,
-            date: new Date(post.createdAt || post.date).toLocaleDateString(),
-            author: post.author,
-            category: post.category,
-            image: post.image_url
-              ? post.image_url.startsWith("http")
-                ? post.image_url
-                : `${API_BASE_URL}${post.image_url}`
-              : "/images/portfolio/dsc00085.webp",
-          }),
-        );
-
-        setBlogPosts(formattedPosts);
-      } catch (error) {
-        console.error("Error fetching blog posts for home:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPosts();
-  }, []);
-
-  const recentPosts = blogPosts.slice(0, 3);
-
-  if (loading) {
-    return null; // Or a loader, but reducing layout shift is better handled by skeleton or min-height. Null is fine for now to avoid flash of wrong content.
-  }
+  if (recentPosts.length === 0) return null;
 
   return (
     <motion.section
@@ -107,13 +55,11 @@ export const BlogSection = () => {
             </motion.h2>
           </div>
           <motion.div variants={itemVariants} className="hidden md:block">
-            <Button
-              variant="text"
-              icon={ArrowRight}
-              onClick={() => (window.location.href = "/blog")}
-            >
-              View All Articles
-            </Button>
+            <Link to="/blog">
+              <Button variant="text" icon={ArrowRight}>
+                View All Articles
+              </Button>
+            </Link>
           </motion.div>
         </div>
 

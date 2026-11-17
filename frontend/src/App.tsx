@@ -15,10 +15,6 @@ import { PortfolioDetailPage } from "./pages/PortfolioDetailPage";
 import { PortfolioListingPage } from "./pages/PortfolioListingPage";
 import { PrivacyPolicyPage } from "./pages/PrivacyPolicyPage";
 import { TermsOfServicePage } from "./pages/TermsOfServicePage";
-import AdminLoginPage from "./pages/admin/AdminLoginPage";
-import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
-import BlogEditorPage from "./pages/admin/BlogEditorPage";
-import ProtectedRoute from "./components/admin/ProtectedRoute";
 
 import ScrollToTop from "./components/common/ScrollToTop";
 
@@ -55,32 +51,8 @@ function App() {
           <Route path="/thank-you" element={<ThankYouPage />} />
         </Route>
 
-        {/* Admin Routes (No Layout or Custom Layout) */}
-        <Route path="/admin/login" element={<AdminLoginPage />} />
-        <Route
-          path="/admin/dashboard"
-          element={
-            <ProtectedRoute>
-              <AdminDashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/create"
-          element={
-            <ProtectedRoute>
-              <BlogEditorPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/edit/:id"
-          element={
-            <ProtectedRoute>
-              <BlogEditorPage />
-            </ProtectedRoute>
-          }
-        />
+        {/* No admin panel: the site is fully static. Blog posts are files in
+            content/blog/ (see docs/how-to-add-a-blog-post.md). */}
 
         {/* 404 catch-all */}
         <Route path="*" element={<NotFound />} />

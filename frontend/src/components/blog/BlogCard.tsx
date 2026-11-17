@@ -17,7 +17,7 @@ export const BlogCard = ({ post }: BlogCardProps) => {
         <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors z-10"></div>
         <img loading="lazy" decoding="async"
           src={post.image}
-          alt={post.title}
+          alt={post.imageAlt || post.title}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
       </Link>

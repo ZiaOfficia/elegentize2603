@@ -1,89 +1,42 @@
-import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useEffect, useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { BlogSidebar } from "../components/blog/BlogSidebar";
 import { BlogCard } from "../components/blog/BlogCard";
 import { motion } from "framer-motion";
-import type { BlogPost } from "../data/blogData";
-import { API_BASE_URL } from "../config";
+import {
+  allPosts,
+  formatPostDate,
+  getBlogPostUrl,
+  searchPosts,
+  toCard,
+} from "../data/blogData";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SEO } from "../components/common/SEO";
 
-interface PaginationData {
-  currentPage: number;
-  totalPages: number;
-  totalCount: number;
-  hasNextPage: boolean;
-  hasPrevPage: boolean;
-}
+const ITEMS_PER_PAGE = 10;
 
 export const BlogListingPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get("search") || "";
-  const pageParam = parseInt(searchParams.get("page") || "1");
+  const pageParam = Math.max(1, parseInt(searchParams.get("page") || "1") || 1);
 
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState<PaginationData>({
-    currentPage: 1,
-    totalPages: 1,
-    totalCount: 0,
-    hasNextPage: false,
-    hasPrevPage: false,
-  });
-
-  const itemsPerPage = 10;
-
-  const fetchPosts = useCallback(async (page: number, search: string) => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: itemsPerPage.toString(),
-      });
-      if (search) {
-        params.append("search", search);
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/blogs?${params}`);
-      const data = await response.json();
-
-      const formattedPosts: BlogPost[] = data.blogs.map(
-        (post: BlogPost & { image_url?: string; createdAt?: string }) => ({
-          id: post.id,
-          title: post.title,
-          slug: post.slug,
-          excerpt: post.excerpt
-            ? post.excerpt
-                .replace(/<!--[\s\S]*?-->/g, "")
-                .replace(/<[^>]+>/g, "")
-                .substring(0, 300)
-            : "",
-          content: post.content,
-          createdAt: post.createdAt,
-          date: new Date(post.createdAt || post.date).toLocaleDateString(),
-          author: post.author,
-          category: post.category,
-          image: post.image_url
-            ? post.image_url.startsWith("http")
-              ? post.image_url
-              : `${API_BASE_URL}${post.image_url}`
-            : "https://images.unsplash.com/photo-1499750310159-5b600cdf0325",
-        }),
-      );
-
-      setBlogPosts(formattedPosts);
-      setPagination(data.pagination);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching posts:", error);
-      setLoading(false);
-    }
-  }, []);
+  const matches = useMemo(() => searchPosts(searchQuery), [searchQuery]);
+  const totalPages = Math.max(1, Math.ceil(matches.length / ITEMS_PER_PAGE));
+  const currentPage = Math.min(pageParam, totalPages);
+  const blogPosts = matches
+    .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+    .map(toCard);
+  const pagination = {
+    currentPage,
+    totalPages,
+    totalCount: matches.length,
+    hasNextPage: currentPage < totalPages,
+    hasPrevPage: currentPage > 1,
+  };
 
   useEffect(() => {
-    fetchPosts(pageParam, searchQuery);
     window.scrollTo(0, 0);
-  }, [pageParam, searchQuery, fetchPosts]);
+  }, [currentPage, searchQuery]);
 
   const handlePageChange = (page: number) => {
     const newParams = new URLSearchParams(searchParams);
@@ -146,9 +99,18 @@ export const BlogListingPage = () => {
           Explore our latest stories, trends, and expert advice to help you plan
           your dream luxury wedding.
         </p>
-        {pagination.totalCount > 0 && (
+        {searchQuery ? (
           <p className="text-sm text-gray-400 mt-4">
-            Showing {blogPosts.length} of {pagination.totalCount} articles
+            {pagination.totalCount} article
+            {pagination.totalCount === 1 ? "" : "s"} matching &ldquo;
+            {searchQuery}&rdquo; &middot;{" "}
+            <Link to="/blog" className="text-primary hover:underline">
+              show all
+            </Link>
+          </p>
+        ) : (
+          <p className="text-sm text-gray-400 mt-4">
+            {allPosts.length} articles
           </p>
         )}
       </div>
@@ -156,11 +118,7 @@ export const BlogListingPage = () => {
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
         {/* Main Content (Articles) */}
         <main className="lg:col-span-2">
-          {loading ? (
-            <div className="text-center py-20 text-gray-400">
-              Loading articles...
-            </div>
-          ) : blogPosts.length === 0 ? (
+          {blogPosts.length === 0 ? (
             <div className="text-center py-20 text-gray-400">
               No articles found.
             </div>
@@ -181,7 +139,7 @@ export const BlogListingPage = () => {
           )}
 
           {/* Pagination - Mobile Optimized */}
-          {!loading && pagination.totalPages > 1 && (
+          {pagination.totalPages > 1 && (
             <div className="mt-12 md:mt-16">
               <div className="flex items-center justify-center gap-1 md:gap-2">
                 {/* Previous Button */}
@@ -246,6 +204,34 @@ export const BlogListingPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Full archive: plain links to every post, so every article is
+          reachable from this page in the prerendered HTML Google reads. */}
+      {!searchQuery && (
+        <section className="max-w-7xl mx-auto mt-24 pt-12 border-t border-gray-100">
+          <h2 className="text-2xl md:text-3xl font-display text-gray-900 mb-8">
+            All Articles
+          </h2>
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
+            {allPosts.map((p) => (
+              <li key={p.slug} className="flex gap-4 text-sm">
+                <time
+                  dateTime={p.createdAt.slice(0, 10)}
+                  className="shrink-0 w-32 text-gray-400"
+                >
+                  {formatPostDate(p.createdAt)}
+                </time>
+                <Link
+                  to={getBlogPostUrl(p.slug, p.createdAt)}
+                  className="text-gray-700 hover:text-primary transition-colors"
+                >
+                  {p.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 };

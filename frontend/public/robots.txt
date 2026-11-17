@@ -4,20 +4,9 @@ Allow: /
 Disallow: /admin/
 Disallow: /thank-you
 
-# Old WordPress garbage URL patterns — block further crawling
-Disallow: /category/
-Disallow: /tag/
-Disallow: /home-4
-Disallow: /about-us
-Disallow: /blog-2
-Disallow: /floral-design-3
-Disallow: /ceiling-design-2
-Disallow: /vinyl-floor-wraps-3
-Disallow: /centerpiece-design-3
-Disallow: /floral-design/
-Disallow: /ceiling-design/
-Disallow: /vinyl-floor-wraps/
-Disallow: /centerpiece-design/
+# Old WordPress URLs (/category/, /about-us, /floral-design/, ...) are NOT
+# blocked: each one 301-redirects to its new page in .htaccess, and Google can
+# only pass their ranking to the new page if it is allowed to see the redirect.
 
 # AI Crawlers
 User-agent: GPTBot

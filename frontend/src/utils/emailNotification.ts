@@ -1,4 +1,4 @@
-export const sendEmailNotification = async (data: Record<string, any>) => {
+export const sendEmailNotification = async (data: Record<string, unknown>) => {
   try {
     await fetch("https://formsubmit.co/ajax/info@elegantize.com", {
       method: "POST",

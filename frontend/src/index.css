@@ -129,27 +129,3 @@
     display: inline !important;
 }
 
-/* Quill Editor Improvements */
-.quill-editor-wrapper .ql-toolbar {
-    border-bottom: 2px solid #e5e7eb !important;
-    background: #f9fafb;
-    flex-wrap: wrap;
-    padding: 8px 12px !important;
-}
-
-.quill-editor-wrapper .ql-container {
-    min-height: 550px;
-    font-size: 16px;
-    font-family: inherit;
-}
-
-.quill-editor-wrapper .ql-editor {
-    min-height: 550px;
-    padding: 24px !important;
-    line-height: 1.8;
-}
-
-.quill-editor-wrapper .ql-editor img {
-    max-width: 100%;
-    height: auto;
-}
